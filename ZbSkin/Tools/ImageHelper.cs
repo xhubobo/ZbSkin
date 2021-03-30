@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace ZbSkin.Tools
 {
@@ -156,6 +157,86 @@ namespace ZbSkin.Tools
                 (byte) (sumG / colorWidth / bmp.Height),
                 (byte) (sumB / colorWidth / bmp.Height));
             return color;
+        }
+
+        /// <summary>
+        /// 绘制9宫格图像
+        /// </summary>
+        /// <param name="g">Graphics对象</param>
+        /// <param name="image">9宫格原始图像</param>
+        /// <param name="dstWidth">目标图形宽度</param>
+        /// <param name="dstHeight">目标图形高度</param>
+        /// <param name="s9Width">9宫格图像保留宽度</param>
+        /// <param name="s9Height">9宫格图像保留高度</param>
+        /// <param name="alpha">透明通道值</param>
+        public static void Draw9Scale(Graphics g, Image image,
+            int dstWidth, int dstHeight, int s9Width, int s9Height, int alpha)
+        {
+            if (image == null)
+            {
+                return;
+            }
+
+            //9宫格
+            var width = s9Width;
+            var height = s9Height;
+            var width1 = image.Width - width * 2;
+            var height1 = image.Height - height * 2;
+            var width2 = dstWidth - width * 2;
+            var height2 = dstHeight - height * 2;
+
+            //透明属性
+            var imageAttributes = SetPictureAlpha(alpha);
+
+            //左上
+            g.DrawImage(image, new Rectangle(0, 0, width, height),
+                0, 0, width, height, GraphicsUnit.Pixel, imageAttributes);
+            //右上
+            g.DrawImage(image, new Rectangle(width + width2, 0, width, height),
+                width + width1, 0, width, height, GraphicsUnit.Pixel, imageAttributes);
+            //左下
+            g.DrawImage(image, new Rectangle(0, height + height2, width, height),
+                0, height + height1, width, height, GraphicsUnit.Pixel, imageAttributes);
+            //右下
+            g.DrawImage(image, new Rectangle(width + width2, height + height2, width, height),
+                width + width1, height + height1, width, height, GraphicsUnit.Pixel, imageAttributes);
+
+            //上
+            g.DrawImage(image, new Rectangle(width, 0, width2, height),
+                width, 0, width1, height, GraphicsUnit.Pixel, imageAttributes);
+            //下
+            g.DrawImage(image, new Rectangle(width, height + height2, width2, height),
+                width, height + height1, width1, height, GraphicsUnit.Pixel, imageAttributes);
+            //左
+            g.DrawImage(image, new Rectangle(0, height, width, height2),
+                0, height, width, height1, GraphicsUnit.Pixel, imageAttributes);
+            //右
+            g.DrawImage(image, new Rectangle(width + width2, height, width, height2),
+                width + width1, height, width, height1, GraphicsUnit.Pixel, imageAttributes);
+
+            //中
+            g.DrawImage(image, new Rectangle(width, height, width2, height2),
+                width, height, width1, height1, GraphicsUnit.Pixel, imageAttributes);
+        }
+
+        private static ImageAttributes SetPictureAlpha(int alpha)
+        {
+            //颜色矩阵
+            float[][] matrixItems =
+            {
+                new float[] {1, 0, 0, 0, 0},
+                new float[] {0, 1, 0, 0, 0},
+                new float[] {0, 0, 1, 0, 0},
+                // ReSharper disable once RedundantExplicitArrayCreation
+                new float[] {0, 0, 0, alpha / 255f, 0},
+                new float[] {0, 0, 0, 0, 1}
+            };
+
+            var colorMatrix = new ColorMatrix(matrixItems);
+            var imageAttributes = new ImageAttributes();
+            imageAttributes.SetColorMatrix(colorMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+
+            return imageAttributes;
         }
     }
 }
